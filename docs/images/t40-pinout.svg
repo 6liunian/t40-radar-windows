@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="370" viewBox="0 0 1440 370">
+<rect width="1440" height="370" fill="white"/>
+<rect x="28" y="125" width="1384" height="120" rx="58" fill="#edf1f6" stroke="#354459" stroke-width="3"/>
+<text x="104" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A12</text>
+<text x="104" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">GND</text>
+<rect x="69" y="143" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="216" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A11</text>
+<text x="216" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">—</text>
+<rect x="181" y="143" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="328" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A10</text>
+<text x="328" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">—</text>
+<rect x="293" y="143" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="440" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A9</text>
+<text x="440" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#c13d32">VCC</text>
+<rect x="405" y="143" width="70" height="17" rx="3" fill="#c13d32" stroke="#c13d32" stroke-width="3"/>
+<text x="552" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A8</text>
+<text x="552" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">—</text>
+<rect x="517" y="143" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="664" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A7</text>
+<text x="664" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">—</text>
+<rect x="629" y="143" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="776" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A6</text>
+<text x="776" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">—</text>
+<rect x="741" y="143" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="888" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A5</text>
+<text x="888" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">GND</text>
+<rect x="853" y="143" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="1000" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A4</text>
+<text x="1000" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#c13d32">VCC</text>
+<rect x="965" y="143" width="70" height="17" rx="3" fill="#c13d32" stroke="#c13d32" stroke-width="3"/>
+<text x="1112" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A3</text>
+<text x="1112" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#2265b4">RS485 A</text>
+<rect x="1077" y="143" width="70" height="17" rx="3" fill="#2265b4" stroke="#2265b4" stroke-width="3"/>
+<text x="1224" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A2</text>
+<text x="1224" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#2265b4">RS485 B</text>
+<rect x="1189" y="143" width="70" height="17" rx="3" fill="#2265b4" stroke="#2265b4" stroke-width="3"/>
+<text x="1336" y="103.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">A1</text>
+<text x="1336" y="54.400000000000006" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">GND</text>
+<rect x="1301" y="143" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="104" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B1</text>
+<text x="104" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">GND</text>
+<rect x="69" y="209" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="216" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B2</text>
+<text x="216" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#00866e">CAN H</text>
+<rect x="181" y="209" width="70" height="17" rx="3" fill="#00866e" stroke="#00866e" stroke-width="3"/>
+<text x="328" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B3</text>
+<text x="328" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#00866e">CAN L</text>
+<rect x="293" y="209" width="70" height="17" rx="3" fill="#00866e" stroke="#00866e" stroke-width="3"/>
+<text x="440" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B4</text>
+<text x="440" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">—</text>
+<rect x="405" y="209" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="552" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B5</text>
+<text x="552" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">GND</text>
+<rect x="517" y="209" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="664" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B6</text>
+<text x="664" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#2265b4">USB D+</text>
+<rect x="629" y="209" width="70" height="17" rx="3" fill="#2265b4" stroke="#2265b4" stroke-width="3"/>
+<text x="776" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B7</text>
+<text x="776" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#2265b4">USB D−</text>
+<rect x="741" y="209" width="70" height="17" rx="3" fill="#2265b4" stroke="#2265b4" stroke-width="3"/>
+<text x="888" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B8</text>
+<text x="888" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">—</text>
+<rect x="853" y="209" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="1000" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B9</text>
+<text x="1000" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">—</text>
+<rect x="965" y="209" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="1112" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B10</text>
+<text x="1112" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">—</text>
+<rect x="1077" y="209" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="1224" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B11</text>
+<text x="1224" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">—</text>
+<rect x="1189" y="209" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+<text x="1336" y="285.8" text-anchor="middle" font-family="Arial,sans-serif" font-size="26" fill="#243448">B12</text>
+<text x="1336" y="327.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" fill="#617084">GND</text>
+<rect x="1301" y="209" width="70" height="17" rx="3" fill="#617084" stroke="#617084" stroke-width="3"/>
+</svg>

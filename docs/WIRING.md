@@ -1,8 +1,8 @@
 # T40 引脚与接线参考
 
-![T40 引脚接线图](images/t40-wiring.png)
+![T40 引脚图](images/t40-pinout.png)
 
-[SVG 矢量版](images/t40-wiring.svg) · [PNG 高清版](images/t40-wiring.png)
+[SVG 矢量版](images/t40-pinout.svg) · [PNG 高清版](images/t40-pinout.png) · [详细接线参考](images/t40-wiring.png)
 
 ## 接口方向
 
