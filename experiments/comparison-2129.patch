@@ -1,0 +1,310 @@
+--- a/desktop/app.py
++++ b/desktop/app.py
+@@ -12,7 +12,7 @@
+ import time
+ import traceback
+ 
+-VERSION = '0.5.2'
++VERSION = '0.5.1-2129-compare'
+ FROZEN = getattr(sys, 'frozen', False)
+ BASE = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent))
+ ASSETS = BASE / 'assets' if FROZEN else Path(__file__).parent / 'assets'
+--- a/desktop/build.ps1
++++ b/desktop/build.ps1
+@@ -10,7 +10,7 @@
+ if ($LASTEXITCODE -ne 0) { throw 'PyInstaller failed' }
+ & $Nsis /INPUTCHARSET UTF8 /V2 (Join-Path $PSScriptRoot 'installer.nsi')
+ if ($LASTEXITCODE -ne 0) { throw 'NSIS failed' }
+-$installer = Join-Path $release 'T40Radar-Setup-0.5.2-win64.exe'
++$installer = Join-Path $release 'T40Radar-Setup-0.5.1-win64.exe'
+ $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+ [IO.File]::WriteAllText(($installer + '.sha256'), ($hash + '  ' + [IO.Path]::GetFileName($installer) + "`r`n"), [Text.Encoding]::ASCII)
+ Get-Item -LiteralPath $installer | Select-Object FullName,Length
+--- a/desktop/installer.nsi
++++ b/desktop/installer.nsi
+@@ -3,17 +3,17 @@
+ !include "x64.nsh"
+ !include "FileFunc.nsh"
+ !define PRODUCT "T40 雷达控制台"
+-!define VERSION "0.5.2"
++!define VERSION "0.5.1"
+ Name "${PRODUCT} ${VERSION}"
+ OutFile "..\release\T40Radar-Setup-${VERSION}-win64.exe"
+ InstallDir "$PROGRAMFILES64\T40Radar"
+ InstallDirRegKey HKLM "Software\T40Radar" "InstallDir"
+ RequestExecutionLevel admin
+ SetCompressor /SOLID lzma
+-VIProductVersion "0.5.2.0"
++VIProductVersion "0.5.1.0"
+ VIAddVersionKey /LANG=2052 "ProductName" "${PRODUCT}"
+ VIAddVersionKey /LANG=2052 "FileDescription" "T40 Radar offline installer"
+-VIAddVersionKey /LANG=2052 "FileVersion" "0.5.2"
++VIAddVersionKey /LANG=2052 "FileVersion" "0.5.1"
+ VIAddVersionKey /LANG=2052 "LegalCopyright" "Includes third-party software; see installed notices."
+ !define MUI_ABORTWARNING
+ !define MUI_ICON "assets\T40Radar.ico"
+--- a/native_windows/ath6kl_win/monitor.py
++++ b/native_windows/ath6kl_win/monitor.py
+@@ -37,8 +37,7 @@
+         result.update(kind='command_error', sample=payload.hex())
+     return result
+ 
+-def serve(bulk, endpoints, mac, directory, tap_guid=None, tap_ip=None, tap_direct=False, read_bulk=None):
+-    read_bulk = read_bulk or bulk
++def serve(bulk, endpoints, mac, directory, tap_guid=None, tap_ip=None, tap_direct=False):
+     directory.mkdir(exist_ok=True)
+     stop = directory / 'stop'
+     if stop.exists():
+@@ -81,7 +80,7 @@
+                 if bridge.tap:
+                     state.update(tap_rx=bridge.tap.rx, tap_tx=bridge.tap.tx)
+                 try:
+-                    packet = read_bulk(0x82, 4096)
++                    packet = bulk(0x82, 16384)
+                 except TimeoutError:
+                     publish()
+                     continue
+--- a/native_windows/ath6kl_win/network.py
++++ b/native_windows/ath6kl_win/network.py
+@@ -55,46 +55,8 @@
+ def pack_data(ethernet):
+     if len(ethernet) < 14:
+         raise ValueError('Short Ethernet frame')
+-    ethernet = limit_radar_tcp_mss(ethernet)
+     snap = bytes.fromhex('aaaa03000000') + ethernet[12:]
+     return bytes(6) + ethernet[:12] + struct.pack('!H', len(snap)) + snap
+-
+-
+-def limit_radar_tcp_mss(ethernet, maximum=384):
+-    """Advertise a small TCP segment to keep radar RX frames below USB 512 B.
+-
+-    Only the dedicated radar IPv4 TCP SYN is changed. Recompute its checksum;
+-    leave data, acknowledgments, non-radar packets and invalid options alone.
+-    """
+-    if len(ethernet)<54 or ethernet[12:14]!=b'\x08\x00':return ethernet
+-    ip=ethernet[14:]
+-    ihl=(ip[0]&15)*4
+-    total=struct.unpack_from('!H',ip,2)[0]
+-    if (ip[0]>>4!=4 or ihl<20 or total>len(ip) or total<ihl+20 or ip[9]!=6
+-            or ip[16:20]!=bytes([192,168,8,2]) or struct.unpack_from('!H',ip,6)[0]&0x3fff):
+-        return ethernet
+-    tcp=bytearray(ip[ihl:total]);header=(tcp[12]>>4)*4
+-    if not tcp[13]&2 or header<20 or header>len(tcp):return ethernet
+-    pos=20;changed=False
+-    while pos<header:
+-        kind=tcp[pos]
+-        if kind==0:break
+-        if kind==1:pos+=1;continue
+-        if pos+2>header:return ethernet
+-        length=tcp[pos+1]
+-        if length<2 or pos+length>header:return ethernet
+-        if kind==2:
+-            if length!=4:return ethernet
+-            value=struct.unpack_from('!H',tcp,pos+2)[0]
+-            if value>maximum:
+-                struct.pack_into('!H',tcp,pos+2,maximum);changed=True
+-        pos+=length
+-    if not changed:return ethernet
+-    tcp[16:18]=b'\0\0'
+-    pseudo=ip[12:20]+struct.pack('!BBH',0,6,len(tcp))
+-    struct.pack_into('!H',tcp,16,checksum(pseudo+tcp))
+-    print(f'RADAR_TCP_MSS {maximum}',flush=True)
+-    return ethernet[:14+ihl]+bytes(tcp)+ethernet[14+total:]
+ 
+ def checksum(data):
+     data += bytes(len(data) & 1)
+--- a/native_windows/ath6kl_win/usb_bulk.py
++++ b/native_windows/ath6kl_win/usb_bulk.py
+@@ -9,9 +9,8 @@
+ 
+ 
+ class UsbBulk:
+-    def __init__(self, handle, clock=time.monotonic, context=None):
++    def __init__(self, handle, clock=time.monotonic):
+         self.handle = handle
+-        self.context = context
+         self.clock = clock
+         self.recent_clears = {}
+         self.stall_recoveries = 0
+@@ -35,36 +34,9 @@
+                     self.stall_recoveries += 1
+                     print(f'USB_RX_RESUMED count={self.stall_recoveries}', flush=True)
+                     return result
+-            count = (self.write_terminated(endpoint, payload) if self.context is not None
+-                     else self.handle.bulkWrite(endpoint, payload, timeout=8000))
++            count = self.handle.bulkWrite(endpoint, payload, timeout=8000)
+             if count != len(payload):
+                 raise RuntimeError('Short bulk write')
+             return b''
+         except usb1.USBErrorTimeout as exc:
+             raise TimeoutError(f'USB endpoint {endpoint:#x} timed out') from exc
+-
+-    def write_terminated(self, endpoint, payload):
+-        # WinUSB fixes SHORT_PACKET_TERMINATE on the first endpoint transfer.
+-        # Always request the policy, including during HTC startup, rather than
+-        # switching it on only for a later exact-multiple write.
+-        transfer = self.handle.getTransfer(add_zero_packet=True)
+-        try:
+-            transfer.setBulk(endpoint, payload, callback=lambda _: None, timeout=8000)
+-            transfer.submit()
+-            while transfer.isSubmitted():
+-                self.context.handleEventsTimeout(.005)
+-            status = transfer.getStatus()
+-            if status == usb1.TRANSFER_TIMED_OUT:raise usb1.USBErrorTimeout()
+-            if status == usb1.TRANSFER_STALL:raise usb1.USBErrorPipe()
+-            if status == usb1.TRANSFER_NO_DEVICE:raise usb1.USBErrorNoDevice()
+-            if status != usb1.TRANSFER_COMPLETED:raise usb1.USBErrorIO()
+-            count = transfer.getActualLength()
+-            if payload and len(payload)%512 == 0:
+-                print(f'USB_TX_ZLP endpoint={endpoint:#x} bytes={len(payload)}',flush=True)
+-            return count
+-        finally:
+-            if transfer.isSubmitted():
+-                try:transfer.cancel()
+-                except usb1.USBErrorNotFound:pass
+-                while transfer.isSubmitted():self.context.handleEventsTimeout(.05)
+-            transfer.close()
+--- a/native_windows/tests/test_usb_bulk.py
++++ b/native_windows/tests/test_usb_bulk.py
+@@ -5,28 +5,6 @@
+ 
+ 
+ class BulkTests(unittest.TestCase):
+-    def test_out_policy_set_for_first_and_boundary_packets(self):
+-        for size in (18,512,1024):
+-            handle=Mock(); transfer=handle.getTransfer.return_value
+-            transfer.isSubmitted.side_effect=[True,False,False]
+-            transfer.getStatus.return_value=usb1.TRANSFER_COMPLETED
+-            transfer.getActualLength.return_value=size
+-            context=Mock()
+-            self.assertEqual(UsbBulk(handle,context=context)(2,bytes(size)),b'')
+-            handle.getTransfer.assert_called_once_with(add_zero_packet=True)
+-            transfer.submit.assert_called_once()
+-            transfer.close.assert_called_once()
+-            handle.bulkWrite.assert_not_called()
+-
+-    def test_terminated_out_failure_not_replayed(self):
+-        handle=Mock(); transfer=handle.getTransfer.return_value
+-        transfer.isSubmitted.return_value=False
+-        transfer.getStatus.return_value=usb1.TRANSFER_STALL
+-        with self.assertRaises(usb1.USBErrorPipe):
+-            UsbBulk(handle,context=Mock())(2,bytes(512))
+-        transfer.submit.assert_called_once()
+-        transfer.close.assert_called_once()
+-
+     def test_stall_clear_then_read(self):
+         handle = Mock()
+         handle.bulkRead.side_effect = [usb1.USBErrorPipe(), b'packet']
+--- a/radar_client/radar_control_panel.py
++++ b/radar_client/radar_control_panel.py
+@@ -390,8 +390,6 @@
+                 if parsed is not None and parsed.msg_id == 0x1E0F and len(parsed.payload) == 44:
+                     actual = struct.unpack_from("<H", parsed.payload, 29)[0]
+                     with self.telemetry.lock:
+-                        # Out-of-range words (e.g. 65531 while stopped) must not
+-                        # be treated as real rotation or fresh stop confirmation.
+                         if actual <= 3600:
+                             self.telemetry.actual_rpm = actual
+                             self.telemetry.last_rpm_at = now
+@@ -474,7 +472,7 @@
+             self.sector_receiver=SectorReceiver(self.telemetry,os.environ.get('RADAR_REMOTE_IP','192.168.8.2'),
+                                                 os.environ.get('RADAR_LOCAL_IP','192.168.8.1'))
+             self.sector_receiver.start()
+-            self.source_box.set('避障候选');self._source_changed()
++            self.source_box.set('360° 扇区');self._source_changed()
+         self.root.after(100, self._refresh)
+ 
+     def _configure_style(self) -> None:
+--- a/radar_client/sector_cloud.py
++++ b/radar_client/sector_cloud.py
+@@ -61,12 +61,6 @@
+     def message(self,text):
+         with self.telemetry.lock:self.telemetry.sector_status=text
+ 
+-    def requested(self):
+-        with self.telemetry.lock:
+-            return (self.telemetry.cloud_source=='sectors' and self.telemetry.motor_running
+-                    and 150 <= self.telemetry.actual_rpm <= 3600
+-                    and 0 <= time.monotonic()-self.telemetry.last_can_at < 2.5)
+-
+     def close(self):
+         self.stop.set()
+         if self.channel:
+@@ -119,16 +113,19 @@
+ 
+     def run(self):
+         while not self.stop.is_set():
+-            if not self.requested():
+-                self.message('完整扇区按需读取：选择扇区数据源并启动旋转后连接')
+-                if self.stop.wait(.5):break
+-                continue
+             try:
+                 self.message('正在连接扇区读取通道…')
+                 client,pid=self.connect();previous=None
+                 with self.telemetry.lock:self.telemetry.sector_history.clear()
+                 while not self.stop.is_set():
+-                    if not self.requested():break
++                    with self.telemetry.lock:
++                        rotating=self.telemetry.motor_running and 150<=self.telemetry.actual_rpm<=3600
++                        can_live=0<self.telemetry.last_rpm_at and time.monotonic()-self.telemetry.last_rpm_at<2.5
++                    if not rotating or not can_live:
++                        self.message('通道已就绪，等待旋转；不显示停转旧快照')
++                        previous=None
++                        if self.stop.wait(.5):break
++                        continue
+                     started=time.monotonic();raw=self.read_snapshot(client,pid)
+                     points,stats,signatures=decode_sectors(raw,previous)
+                     first=previous is None;previous=signatures
+--- a/radar_client/workspace_ui.py
++++ b/radar_client/workspace_ui.py
+@@ -21,7 +21,7 @@
+ 
+     def _build_layout(self):
+         self.frozen_snapshot=None;self.last_live_snapshot=None;self._last_draw=0;self.draw_seconds=.1
+-        self.root.title('T40 点云工作台 · 0.5.2')
++        self.root.title('T40 点云工作台 · 21:29 对照版')
+         self.root.geometry('1480x920');self.root.minsize(1080,700)
+         self.root.configure(bg=BG)
+         if not os.environ.get('RADAR_TEST_WINDOW'):
+--- a/windows/test_sector_cloud.py
++++ b/windows/test_sector_cloud.py
+@@ -1,8 +1,7 @@
+ import sys,struct,math,time,unittest
+ from pathlib import Path
+ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'radar_client'))
+-from sector_cloud import decode_sectors,SIZE,STRIDE,DEGREES_PER_ENCODER,SectorReceiver
+-from unittest.mock import Mock
++from sector_cloud import decode_sectors,SIZE,STRIDE,DEGREES_PER_ENCODER
+ from radar_control_panel import Telemetry
+ from cloud_view import CloudView
+ from matplotlib.figure import Figure
+@@ -15,29 +14,6 @@
+     for j in range(count):struct.pack_into('<ffffHH',blob,off+15+j*20,distance,0,0,0,20,0)
+ 
+ class SectorTests(unittest.TestCase):
+-    def test_sector_connection_requires_explicit_source_and_running_motor(self):
+-        telemetry=Telemetry(last_can_at=time.monotonic(),actual_rpm=900,motor_running=True)
+-        receiver=SectorReceiver(telemetry)
+-        self.assertFalse(receiver.requested())
+-        telemetry.cloud_source='sectors'
+-        self.assertTrue(receiver.requested())
+-        telemetry.motor_running=False
+-        self.assertFalse(receiver.requested())
+-        telemetry.motor_running=True
+-        for rpm in (0,5,65531):
+-            telemetry.actual_rpm=rpm
+-            self.assertFalse(receiver.requested())
+-        telemetry.actual_rpm=900;telemetry.last_can_at=time.monotonic()-3
+-        self.assertFalse(receiver.requested())
+-
+-    def test_default_worker_opens_no_ssh_connection(self):
+-        telemetry=Telemetry(last_can_at=time.monotonic(),actual_rpm=0)
+-        receiver=SectorReceiver(telemetry);receiver.connect=Mock()
+-        receiver.start()
+-        time.sleep(.1)
+-        receiver.close()
+-        receiver.connect.assert_not_called()
+-
+     def test_all_125_slots_in_all_directions(self):
+         blob=bytearray(SIZE)
+         for index in range(360):make_sector(blob,index,125)

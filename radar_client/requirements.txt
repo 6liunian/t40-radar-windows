@@ -1,0 +1,5 @@
+numpy
+paramiko==3.5.1
+prompt_toolkit
+python-can
+matplotlib

@@ -1,0 +1,2 @@
+-r radar_client/requirements.txt
+libusb1==3.4.0

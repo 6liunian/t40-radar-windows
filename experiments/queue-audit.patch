@@ -1,0 +1,542 @@
+--- a/desktop/app.py
++++ b/desktop/app.py
+@@ -12,7 +12,7 @@
+ import time
+ import traceback
+ 
+-VERSION = '0.5.2'
++VERSION = '0.5.1-queue-audit'
+ FROZEN = getattr(sys, 'frozen', False)
+ BASE = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent))
+ ASSETS = BASE / 'assets' if FROZEN else Path(__file__).parent / 'assets'
+--- a/desktop/build.ps1
++++ b/desktop/build.ps1
+@@ -10,7 +10,7 @@
+ if ($LASTEXITCODE -ne 0) { throw 'PyInstaller failed' }
+ & $Nsis /INPUTCHARSET UTF8 /V2 (Join-Path $PSScriptRoot 'installer.nsi')
+ if ($LASTEXITCODE -ne 0) { throw 'NSIS failed' }
+-$installer = Join-Path $release 'T40Radar-Setup-0.5.2-win64.exe'
++$installer = Join-Path $release 'T40Radar-Setup-0.5.1-win64.exe'
+ $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+ [IO.File]::WriteAllText(($installer + '.sha256'), ($hash + '  ' + [IO.Path]::GetFileName($installer) + "`r`n"), [Text.Encoding]::ASCII)
+ Get-Item -LiteralPath $installer | Select-Object FullName,Length
+--- a/desktop/installer.nsi
++++ b/desktop/installer.nsi
+@@ -3,17 +3,17 @@
+ !include "x64.nsh"
+ !include "FileFunc.nsh"
+ !define PRODUCT "T40 雷达控制台"
+-!define VERSION "0.5.2"
++!define VERSION "0.5.1"
+ Name "${PRODUCT} ${VERSION}"
+ OutFile "..\release\T40Radar-Setup-${VERSION}-win64.exe"
+ InstallDir "$PROGRAMFILES64\T40Radar"
+ InstallDirRegKey HKLM "Software\T40Radar" "InstallDir"
+ RequestExecutionLevel admin
+ SetCompressor /SOLID lzma
+-VIProductVersion "0.5.2.0"
++VIProductVersion "0.5.1.0"
+ VIAddVersionKey /LANG=2052 "ProductName" "${PRODUCT}"
+ VIAddVersionKey /LANG=2052 "FileDescription" "T40 Radar offline installer"
+-VIAddVersionKey /LANG=2052 "FileVersion" "0.5.2"
++VIAddVersionKey /LANG=2052 "FileVersion" "0.5.1"
+ VIAddVersionKey /LANG=2052 "LegalCopyright" "Includes third-party software; see installed notices."
+ !define MUI_ABORTWARNING
+ !define MUI_ICON "assets\T40Radar.ico"
+--- a/native_windows/ath6kl_win/htc.py
++++ b/native_windows/ath6kl_win/htc.py
+@@ -13,6 +13,9 @@
+         self.bulk = bulk
+         self.sequences = {}
+         self.tx_lock = threading.Lock()
++
++    def metrics_snapshot(self):
++        return self.bulk.metrics_snapshot()
+ 
+     def __call__(self, usb_endpoint, payload):
+         if usb_endpoint & 0x80:
+--- /dev/null
++++ b/native_windows/ath6kl_win/io_metrics.py
+@@ -0,0 +1,36 @@
++"""Bounded, thread-safe timing counters; never hold a lock during device I/O."""
++import threading
++import time
++
++
++class IoMetrics:
++    def __init__(self, clock=time.monotonic):
++        self.clock = clock
++        self.lock = threading.Lock()
++        self.rows = {}
++
++    def begin(self, name):
++        now = self.clock()
++        with self.lock:
++            row = self.rows.setdefault(name, dict(calls=0, errors=0, bytes=0, max_ms=0, last_ms=0, active=None))
++            row['calls'] += 1
++            row['active'] = now
++        return now
++
++    def end(self, name, started, count=0, error=None):
++        elapsed = 1000*(self.clock()-started)
++        with self.lock:
++            row = self.rows[name]
++            row['active'] = None
++            row['last_ms'] = elapsed
++            row['max_ms'] = max(row['max_ms'], elapsed)
++            row['bytes'] += count
++            if error is not None:
++                row['errors'] += 1
++                row['last_error'] = type(error).__name__
++
++    def snapshot(self):
++        now = self.clock()
++        with self.lock:
++            return {name:{**row, 'active_ms':0 if row['active'] is None else 1000*(now-row['active'])}
++                    for name,row in self.rows.items()}
+--- a/native_windows/ath6kl_win/monitor.py
++++ b/native_windows/ath6kl_win/monitor.py
+@@ -37,8 +37,7 @@
+         result.update(kind='command_error', sample=payload.hex())
+     return result
+ 
+-def serve(bulk, endpoints, mac, directory, tap_guid=None, tap_ip=None, tap_direct=False, read_bulk=None):
+-    read_bulk = read_bulk or bulk
++def serve(bulk, endpoints, mac, directory, tap_guid=None, tap_ip=None, tap_direct=False):
+     directory.mkdir(exist_ok=True)
+     stop = directory / 'stop'
+     if stop.exists():
+@@ -47,12 +46,19 @@
+              'udp_rx': 0, 'udp_tx': 0, 'udp_dropped': 0, 'replies_sent': 0, 'tap_direct': tap_direct,
+              'parse_errors': 0, 'tcp_rx': 0, 'htc_dropped': 0}
+     invalid_times = deque()
++    bridge = None
++    last_rx_complete = None
++    state['rx_service_gap_max_ms'] = 0
+     last_publish = 0.0
+     def publish(force=False):
+         nonlocal last_publish
+         now = time.monotonic()
+         if not force and now - last_publish < 1:
+             return
++        if hasattr(bulk, 'metrics_snapshot'):
++            state['usb_io'] = bulk.metrics_snapshot()
++        if bridge is not None and bridge.tap is not None:
++            state['tap_diagnostics'] = bridge.tap.metrics_snapshot()
+         state['updated'] = time.time()
+         if publish_status(directory, state):
+             last_publish = now
+@@ -81,10 +87,14 @@
+                 if bridge.tap:
+                     state.update(tap_rx=bridge.tap.rx, tap_tx=bridge.tap.tx)
+                 try:
+-                    packet = read_bulk(0x82, 4096)
++                    if last_rx_complete is not None:
++                        state['rx_service_gap_max_ms'] = max(state['rx_service_gap_max_ms'], 1000*(time.monotonic()-last_rx_complete))
++                    packet = bulk(0x82, 16384)
+                 except TimeoutError:
+                     publish()
+                     continue
++                finally:
++                    last_rx_complete = time.monotonic()
+                 if not packet:
+                     # USB zero-length completion is not an HTC packet.
+                     publish()
+--- a/native_windows/ath6kl_win/network.py
++++ b/native_windows/ath6kl_win/network.py
+@@ -55,46 +55,8 @@
+ def pack_data(ethernet):
+     if len(ethernet) < 14:
+         raise ValueError('Short Ethernet frame')
+-    ethernet = limit_radar_tcp_mss(ethernet)
+     snap = bytes.fromhex('aaaa03000000') + ethernet[12:]
+     return bytes(6) + ethernet[:12] + struct.pack('!H', len(snap)) + snap
+-
+-
+-def limit_radar_tcp_mss(ethernet, maximum=384):
+-    """Advertise a small TCP segment to keep radar RX frames below USB 512 B.
+-
+-    Only the dedicated radar IPv4 TCP SYN is changed. Recompute its checksum;
+-    leave data, acknowledgments, non-radar packets and invalid options alone.
+-    """
+-    if len(ethernet)<54 or ethernet[12:14]!=b'\x08\x00':return ethernet
+-    ip=ethernet[14:]
+-    ihl=(ip[0]&15)*4
+-    total=struct.unpack_from('!H',ip,2)[0]
+-    if (ip[0]>>4!=4 or ihl<20 or total>len(ip) or total<ihl+20 or ip[9]!=6
+-            or ip[16:20]!=bytes([192,168,8,2]) or struct.unpack_from('!H',ip,6)[0]&0x3fff):
+-        return ethernet
+-    tcp=bytearray(ip[ihl:total]);header=(tcp[12]>>4)*4
+-    if not tcp[13]&2 or header<20 or header>len(tcp):return ethernet
+-    pos=20;changed=False
+-    while pos<header:
+-        kind=tcp[pos]
+-        if kind==0:break
+-        if kind==1:pos+=1;continue
+-        if pos+2>header:return ethernet
+-        length=tcp[pos+1]
+-        if length<2 or pos+length>header:return ethernet
+-        if kind==2:
+-            if length!=4:return ethernet
+-            value=struct.unpack_from('!H',tcp,pos+2)[0]
+-            if value>maximum:
+-                struct.pack_into('!H',tcp,pos+2,maximum);changed=True
+-        pos+=length
+-    if not changed:return ethernet
+-    tcp[16:18]=b'\0\0'
+-    pseudo=ip[12:20]+struct.pack('!BBH',0,6,len(tcp))
+-    struct.pack_into('!H',tcp,16,checksum(pseudo+tcp))
+-    print(f'RADAR_TCP_MSS {maximum}',flush=True)
+-    return ethernet[:14+ihl]+bytes(tcp)+ethernet[14+total:]
+ 
+ def checksum(data):
+     data += bytes(len(data) & 1)
+--- a/native_windows/ath6kl_win/tap_debug.py
++++ b/native_windows/ath6kl_win/tap_debug.py
+@@ -7,6 +7,7 @@
+ import ctypes as c
+ from ctypes import wintypes as w
+ import queue
++from .io_metrics import IoMetrics
+ import struct
+ from .overlapped import Overlapped
+ 
+@@ -69,6 +70,9 @@
+             raise c.WinError(c.get_last_error())
+         self.read_op = None
+         self.queue = queue.Queue(maxsize=256)
++        self.queue_dropped = 0
++        self.queue_high_water = 0
++        self.metrics = IoMetrics()
+         self.rx = self.tx = 0
+         self.tcp_tx = 0
+         try:
+@@ -116,8 +120,14 @@
+         if translated is not None:
+             try:
+                 self.queue.put_nowait(translated)
++                self.queue_high_water = max(self.queue_high_water, self.queue.qsize())
+             except queue.Full:
+-                pass
++                self.queue_dropped += 1
++
++    def metrics_snapshot(self):
++        return dict(queue_size=self.queue.qsize(), queue_capacity=self.queue.maxsize,
++                    queue_high_water=self.queue_high_water, queue_dropped=self.queue_dropped,
++                    io=self.metrics.snapshot())
+ 
+     def poll(self, send):
+         for _ in range(8):
+@@ -127,11 +137,17 @@
+                 break
+             op = self.operation()
+             buf = c.create_string_buffer(packet)
++            started = self.metrics.begin('tap_write')
+             try:
+                 result = self.kernel.WriteFile(self.handle, buf, len(packet), None, c.byref(op))
+                 if self.complete(op, result) != len(packet):
+                     raise RuntimeError('Short TAP write')
+                 self.rx += 1
++            except BaseException as exc:
++                self.metrics.end('tap_write', started, error=exc)
++                raise
++            else:
++                self.metrics.end('tap_write', started, len(packet))
+             finally:
+                 self.kernel.CloseHandle(op.event)
+         for _ in range(8):
+@@ -156,7 +172,14 @@
+                     if self.tcp_tx<=30:print('TAP_TCP_TX',translated[:96].hex(),flush=True)
+                 if self.tx < 30:
+                     print('TAP_TX', translated[:80].hex(), flush=True)
+-                send(translated)
++                started = self.metrics.begin('usb_send')
++                try:
++                    send(translated)
++                except BaseException as exc:
++                    self.metrics.end('usb_send', started, error=exc)
++                    raise
++                else:
++                    self.metrics.end('usb_send', started, len(translated))
+                 self.tx += 1
+ 
+     def close(self):
+--- a/native_windows/ath6kl_win/usb_bulk.py
++++ b/native_windows/ath6kl_win/usb_bulk.py
+@@ -6,22 +6,40 @@
+ import time
+ from collections import deque
+ import usb1
++from .io_metrics import IoMetrics
+ 
+ 
+ class UsbBulk:
+-    def __init__(self, handle, clock=time.monotonic, context=None):
++    def __init__(self, handle, clock=time.monotonic):
+         self.handle = handle
+-        self.context = context
+         self.clock = clock
+         self.recent_clears = {}
+         self.stall_recoveries = 0
++        self.stall_events = 0
++        self.metrics = IoMetrics()
++
++    def metrics_snapshot(self):
++        return {**self.metrics.snapshot(), 'recovery': {'pipe_errors': self.stall_events,
++                'successful_retries': self.stall_recoveries}}
+ 
+     def __call__(self, endpoint, payload):
++        name = f'usb_{endpoint:02x}'
++        started = self.metrics.begin(name)
++        try:
++            result = self._transfer(endpoint, payload)
++        except BaseException as exc:
++            self.metrics.end(name, started, error=exc)
++            raise
++        self.metrics.end(name, started, len(result) if endpoint & 0x80 else len(payload))
++        return result
++
++    def _transfer(self, endpoint, payload):
+         try:
+             if endpoint & 0x80:
+                 try:
+                     return bytes(self.handle.bulkRead(endpoint, payload, timeout=8000))
+                 except usb1.USBErrorPipe:
++                    self.stall_events += 1
+                     now = self.clock()
+                     recent = self.recent_clears.setdefault(endpoint, deque())
+                     while recent and now-recent[0] > 10:
+@@ -35,36 +53,9 @@
+                     self.stall_recoveries += 1
+                     print(f'USB_RX_RESUMED count={self.stall_recoveries}', flush=True)
+                     return result
+-            count = (self.write_terminated(endpoint, payload) if self.context is not None
+-                     else self.handle.bulkWrite(endpoint, payload, timeout=8000))
++            count = self.handle.bulkWrite(endpoint, payload, timeout=8000)
+             if count != len(payload):
+                 raise RuntimeError('Short bulk write')
+             return b''
+         except usb1.USBErrorTimeout as exc:
+             raise TimeoutError(f'USB endpoint {endpoint:#x} timed out') from exc
+-
+-    def write_terminated(self, endpoint, payload):
+-        # WinUSB fixes SHORT_PACKET_TERMINATE on the first endpoint transfer.
+-        # Always request the policy, including during HTC startup, rather than
+-        # switching it on only for a later exact-multiple write.
+-        transfer = self.handle.getTransfer(add_zero_packet=True)
+-        try:
+-            transfer.setBulk(endpoint, payload, callback=lambda _: None, timeout=8000)
+-            transfer.submit()
+-            while transfer.isSubmitted():
+-                self.context.handleEventsTimeout(.005)
+-            status = transfer.getStatus()
+-            if status == usb1.TRANSFER_TIMED_OUT:raise usb1.USBErrorTimeout()
+-            if status == usb1.TRANSFER_STALL:raise usb1.USBErrorPipe()
+-            if status == usb1.TRANSFER_NO_DEVICE:raise usb1.USBErrorNoDevice()
+-            if status != usb1.TRANSFER_COMPLETED:raise usb1.USBErrorIO()
+-            count = transfer.getActualLength()
+-            if payload and len(payload)%512 == 0:
+-                print(f'USB_TX_ZLP endpoint={endpoint:#x} bytes={len(payload)}',flush=True)
+-            return count
+-        finally:
+-            if transfer.isSubmitted():
+-                try:transfer.cancel()
+-                except usb1.USBErrorNotFound:pass
+-                while transfer.isSubmitted():self.context.handleEventsTimeout(.05)
+-            transfer.close()
+--- /dev/null
++++ b/native_windows/tests/test_io_metrics.py
+@@ -0,0 +1,49 @@
++import queue
++import unittest
++from unittest.mock import Mock, patch
++import usb1
++from ath6kl_win.io_metrics import IoMetrics
++from ath6kl_win.usb_bulk import UsbBulk
++from ath6kl_win.tap_debug import TapDebug
++
++
++class IoMetricsTests(unittest.TestCase):
++    def test_recovered_stall_is_counted_even_when_outer_call_succeeds(self):
++        handle=Mock();handle.bulkRead.side_effect=[usb1.USBErrorPipe(),b'ok']
++        bulk=UsbBulk(handle)
++        self.assertEqual(bulk(0x82,4096),b'ok')
++        self.assertEqual(bulk.metrics_snapshot()['recovery'],{'pipe_errors':1,'successful_retries':1})
++        self.assertEqual(bulk.metrics_snapshot()['usb_82']['errors'],0)
++
++    def test_active_wait_error_and_success_are_distinguishable(self):
++        now = [10.0]
++        m = IoMetrics(clock=lambda:now[0])
++        start = m.begin('read')
++        now[0] += .2
++        self.assertAlmostEqual(m.snapshot()['read']['active_ms'],200)
++        m.end('read',start,error=TimeoutError())
++        start = m.begin('read')
++        now[0] += .01
++        m.end('read',start,512)
++        result=m.snapshot()['read']
++        self.assertEqual((result['calls'],result['errors'],result['bytes']),(2,1,512))
++        self.assertEqual(result['active_ms'],0)
++        self.assertAlmostEqual(result['max_ms'],200)
++
++    def test_queue_full_is_observable_and_receive_never_blocks(self):
++        tap=TapDebug.__new__(TapDebug)
++        tap.ap_mac=tap.mac=bytes(6);tap.debug_ip=bytes(4);tap.allow_udp=True
++        tap.queue=queue.Queue(maxsize=1)
++        tap.queue_dropped=tap.queue_high_water=0;tap.metrics=IoMetrics()
++        with patch('ath6kl_win.tap_debug.translate',return_value=b'packet'):
++            tap.receive(b'a');tap.receive(b'b')
++        result=tap.metrics_snapshot()
++        self.assertEqual((result['queue_size'],result['queue_high_water'],result['queue_dropped']),(1,1,1))
++
++    def test_usb_failure_keeps_counter_without_replaying_out(self):
++        handle=Mock();handle.bulkWrite.side_effect=usb1.USBErrorPipe()
++        bulk=UsbBulk(handle)
++        with self.assertRaises(usb1.USBErrorPipe):bulk(2,b'command')
++        self.assertEqual(bulk.metrics_snapshot()['usb_02']['errors'],1)
++        self.assertEqual(bulk.metrics_snapshot()['usb_02']['active_ms'],0)
++        handle.bulkWrite.assert_called_once()
+--- a/native_windows/tests/test_usb_bulk.py
++++ b/native_windows/tests/test_usb_bulk.py
+@@ -5,28 +5,6 @@
+ 
+ 
+ class BulkTests(unittest.TestCase):
+-    def test_out_policy_set_for_first_and_boundary_packets(self):
+-        for size in (18,512,1024):
+-            handle=Mock(); transfer=handle.getTransfer.return_value
+-            transfer.isSubmitted.side_effect=[True,False,False]
+-            transfer.getStatus.return_value=usb1.TRANSFER_COMPLETED
+-            transfer.getActualLength.return_value=size
+-            context=Mock()
+-            self.assertEqual(UsbBulk(handle,context=context)(2,bytes(size)),b'')
+-            handle.getTransfer.assert_called_once_with(add_zero_packet=True)
+-            transfer.submit.assert_called_once()
+-            transfer.close.assert_called_once()
+-            handle.bulkWrite.assert_not_called()
+-
+-    def test_terminated_out_failure_not_replayed(self):
+-        handle=Mock(); transfer=handle.getTransfer.return_value
+-        transfer.isSubmitted.return_value=False
+-        transfer.getStatus.return_value=usb1.TRANSFER_STALL
+-        with self.assertRaises(usb1.USBErrorPipe):
+-            UsbBulk(handle,context=Mock())(2,bytes(512))
+-        transfer.submit.assert_called_once()
+-        transfer.close.assert_called_once()
+-
+     def test_stall_clear_then_read(self):
+         handle = Mock()
+         handle.bulkRead.side_effect = [usb1.USBErrorPipe(), b'packet']
+--- a/radar_client/radar_control_panel.py
++++ b/radar_client/radar_control_panel.py
+@@ -390,8 +390,6 @@
+                 if parsed is not None and parsed.msg_id == 0x1E0F and len(parsed.payload) == 44:
+                     actual = struct.unpack_from("<H", parsed.payload, 29)[0]
+                     with self.telemetry.lock:
+-                        # Out-of-range words (e.g. 65531 while stopped) must not
+-                        # be treated as real rotation or fresh stop confirmation.
+                         if actual <= 3600:
+                             self.telemetry.actual_rpm = actual
+                             self.telemetry.last_rpm_at = now
+@@ -474,7 +472,7 @@
+             self.sector_receiver=SectorReceiver(self.telemetry,os.environ.get('RADAR_REMOTE_IP','192.168.8.2'),
+                                                 os.environ.get('RADAR_LOCAL_IP','192.168.8.1'))
+             self.sector_receiver.start()
+-            self.source_box.set('避障候选');self._source_changed()
++            self.source_box.set('360° 扇区');self._source_changed()
+         self.root.after(100, self._refresh)
+ 
+     def _configure_style(self) -> None:
+--- a/radar_client/sector_cloud.py
++++ b/radar_client/sector_cloud.py
+@@ -61,12 +61,6 @@
+     def message(self,text):
+         with self.telemetry.lock:self.telemetry.sector_status=text
+ 
+-    def requested(self):
+-        with self.telemetry.lock:
+-            return (self.telemetry.cloud_source=='sectors' and self.telemetry.motor_running
+-                    and 150 <= self.telemetry.actual_rpm <= 3600
+-                    and 0 <= time.monotonic()-self.telemetry.last_can_at < 2.5)
+-
+     def close(self):
+         self.stop.set()
+         if self.channel:
+@@ -119,16 +113,19 @@
+ 
+     def run(self):
+         while not self.stop.is_set():
+-            if not self.requested():
+-                self.message('完整扇区按需读取：选择扇区数据源并启动旋转后连接')
+-                if self.stop.wait(.5):break
+-                continue
+             try:
+                 self.message('正在连接扇区读取通道…')
+                 client,pid=self.connect();previous=None
+                 with self.telemetry.lock:self.telemetry.sector_history.clear()
+                 while not self.stop.is_set():
+-                    if not self.requested():break
++                    with self.telemetry.lock:
++                        rotating=self.telemetry.motor_running and 150<=self.telemetry.actual_rpm<=3600
++                        can_live=0<self.telemetry.last_rpm_at and time.monotonic()-self.telemetry.last_rpm_at<2.5
++                    if not rotating or not can_live:
++                        self.message('通道已就绪，等待旋转；不显示停转旧快照')
++                        previous=None
++                        if self.stop.wait(.5):break
++                        continue
+                     started=time.monotonic();raw=self.read_snapshot(client,pid)
+                     points,stats,signatures=decode_sectors(raw,previous)
+                     first=previous is None;previous=signatures
+--- a/radar_client/workspace_ui.py
++++ b/radar_client/workspace_ui.py
+@@ -21,7 +21,7 @@
+ 
+     def _build_layout(self):
+         self.frozen_snapshot=None;self.last_live_snapshot=None;self._last_draw=0;self.draw_seconds=.1
+-        self.root.title('T40 点云工作台 · 0.5.2')
++        self.root.title('T40 点云工作台 · 队列诊断版')
+         self.root.geometry('1480x920');self.root.minsize(1080,700)
+         self.root.configure(bg=BG)
+         if not os.environ.get('RADAR_TEST_WINDOW'):
+--- a/windows/test_sector_cloud.py
++++ b/windows/test_sector_cloud.py
+@@ -1,8 +1,7 @@
+ import sys,struct,math,time,unittest
+ from pathlib import Path
+ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'radar_client'))
+-from sector_cloud import decode_sectors,SIZE,STRIDE,DEGREES_PER_ENCODER,SectorReceiver
+-from unittest.mock import Mock
++from sector_cloud import decode_sectors,SIZE,STRIDE,DEGREES_PER_ENCODER
+ from radar_control_panel import Telemetry
+ from cloud_view import CloudView
+ from matplotlib.figure import Figure
+@@ -15,29 +14,6 @@
+     for j in range(count):struct.pack_into('<ffffHH',blob,off+15+j*20,distance,0,0,0,20,0)
+ 
+ class SectorTests(unittest.TestCase):
+-    def test_sector_connection_requires_explicit_source_and_running_motor(self):
+-        telemetry=Telemetry(last_can_at=time.monotonic(),actual_rpm=900,motor_running=True)
+-        receiver=SectorReceiver(telemetry)
+-        self.assertFalse(receiver.requested())
+-        telemetry.cloud_source='sectors'
+-        self.assertTrue(receiver.requested())
+-        telemetry.motor_running=False
+-        self.assertFalse(receiver.requested())
+-        telemetry.motor_running=True
+-        for rpm in (0,5,65531):
+-            telemetry.actual_rpm=rpm
+-            self.assertFalse(receiver.requested())
+-        telemetry.actual_rpm=900;telemetry.last_can_at=time.monotonic()-3
+-        self.assertFalse(receiver.requested())
+-
+-    def test_default_worker_opens_no_ssh_connection(self):
+-        telemetry=Telemetry(last_can_at=time.monotonic(),actual_rpm=0)
+-        receiver=SectorReceiver(telemetry);receiver.connect=Mock()
+-        receiver.start()
+-        time.sleep(.1)
+-        receiver.close()
+-        receiver.connect.assert_not_called()
+-
+     def test_all_125_slots_in_all_directions(self):
+         blob=bytearray(SIZE)
+         for index in range(360):make_sector(blob,index,125)
