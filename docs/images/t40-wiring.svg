@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1780" viewBox="0 0 1600 1780">
+<rect width="100%" height="100%" fill="#f4f7fb"/>
+<text x="60" y="82" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="46" fill="#152c44">T40 雷达 · 引脚与接线参考</text>
+<text x="62" y="128" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="25" fill="#52667a">RD2484R  /  Windows + PCAN-USB + 雷达内置 AR1021x USBWLAN</text>
+<rect x="60" y="154" width="1480" height="104" rx="14" fill="#fff2e9" stroke="#e7ad87" stroke-width="2"/>
+<text x="82" y="197" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="29" fill="#bb382c">自定义 Type-C 接口：区分正反，不能用普通 USB-C 线直连电脑。</text>
+<text x="82" y="234" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="24" fill="#152c44">以下是来源图的针号排布，不是实物焊接面；上电前必须核对转接板针号及通断。</text>
+<rect x="60" y="286" width="1480" height="405" rx="14" fill="#ffffff" stroke="#d6dfe9" stroke-width="2"/>
+<text x="84" y="332" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="30" fill="#152c44">01  雷达侧针脚排列</text>
+<text x="84" y="370" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="24" fill="#52667a">按原作者 Type-C plug 图重绘；不要根据本图猜测母座、焊盘或插入方向。</text>
+<rect x="87" y="437" width="1424" height="88" rx="40" fill="#e8eef5" stroke="#9aaabb" stroke-width="2"/>
+<text x="122" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A12</text>
+<rect x="110" y="450" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="102" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">GND</text>
+<text x="239" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A11</text>
+<rect x="227" y="450" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="219" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">—</text>
+<text x="356" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A10</text>
+<rect x="344" y="450" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="336" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">—</text>
+<text x="473" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A9</text>
+<rect x="461" y="450" width="78" height="17" rx="3" fill="#bb382c" stroke="#bb382c" stroke-width="2"/>
+<text x="453" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#bb382c">VCC</text>
+<text x="590" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A8</text>
+<rect x="578" y="450" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="570" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">—</text>
+<text x="707" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A7</text>
+<rect x="695" y="450" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="687" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">—</text>
+<text x="824" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A6</text>
+<rect x="812" y="450" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="804" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">—</text>
+<text x="941" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A5</text>
+<rect x="929" y="450" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="921" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">GND</text>
+<text x="1058" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A4</text>
+<rect x="1046" y="450" width="78" height="17" rx="3" fill="#bb382c" stroke="#bb382c" stroke-width="2"/>
+<text x="1038" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#bb382c">VCC</text>
+<text x="1175" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A3</text>
+<rect x="1163" y="450" width="78" height="17" rx="3" fill="#2567bc" stroke="#2567bc" stroke-width="2"/>
+<text x="1155" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#2567bc">485 A</text>
+<text x="1292" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A2</text>
+<rect x="1280" y="450" width="78" height="17" rx="3" fill="#2567bc" stroke="#2567bc" stroke-width="2"/>
+<text x="1272" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#2567bc">485 B</text>
+<text x="1409" y="433" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">A1</text>
+<rect x="1397" y="450" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="1389" y="399" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">GND</text>
+<text x="122" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B1</text>
+<rect x="110" y="492" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="102" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">GND</text>
+<text x="239" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B2</text>
+<rect x="227" y="492" width="78" height="17" rx="3" fill="#087d6d" stroke="#087d6d" stroke-width="2"/>
+<text x="219" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#087d6d">CAN H</text>
+<text x="356" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B3</text>
+<rect x="344" y="492" width="78" height="17" rx="3" fill="#087d6d" stroke="#087d6d" stroke-width="2"/>
+<text x="336" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#087d6d">CAN L</text>
+<text x="473" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B4</text>
+<rect x="461" y="492" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="453" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">—</text>
+<text x="590" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B5</text>
+<rect x="578" y="492" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="570" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">GND</text>
+<text x="707" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B6</text>
+<rect x="695" y="492" width="78" height="17" rx="3" fill="#2567bc" stroke="#2567bc" stroke-width="2"/>
+<text x="687" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#2567bc">USB D+</text>
+<text x="824" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B7</text>
+<rect x="812" y="492" width="78" height="17" rx="3" fill="#2567bc" stroke="#2567bc" stroke-width="2"/>
+<text x="804" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#2567bc">USB D−</text>
+<text x="941" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B8</text>
+<rect x="929" y="492" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="921" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">—</text>
+<text x="1058" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B9</text>
+<rect x="1046" y="492" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="1038" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">—</text>
+<text x="1175" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B10</text>
+<rect x="1163" y="492" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="1155" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">—</text>
+<text x="1292" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B11</text>
+<rect x="1280" y="492" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="1272" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">—</text>
+<text x="1409" y="571" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">B12</text>
+<rect x="1397" y="492" width="78" height="17" rx="3" fill="#667589" stroke="#667589" stroke-width="2"/>
+<text x="1389" y="605" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" fill="#667589">GND</text>
+<text x="84" y="661" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#52667a">“—”仅表示来源未标注：保持不接，不代表已证实是空脚。RS485 本项目不接。</text>
+<rect x="60" y="716" width="1480" height="435" rx="14" fill="#ffffff" stroke="#d6dfe9" stroke-width="2"/>
+<text x="84" y="763" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="30" fill="#152c44">02  功能接线表</text>
+<text x="90" y="811" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="25" fill="#52667a">雷达 / 转接板针脚</text>
+<text x="640" y="811" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="25" fill="#52667a">连接到</text>
+<text x="1130" y="811" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="25" fill="#52667a">说明</text>
+<line x1="84" y1="828" x2="1515" y2="828" stroke="#e0e7ee" stroke-width="1"/>
+<text x="90" y="859" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#bb382c">A4、A9 · VCC</text>
+<text x="640" y="859" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">外部雷达电源正极</text>
+<text x="1130" y="859" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#52667a">供电规格见下方</text>
+<line x1="84" y1="876" x2="1515" y2="876" stroke="#e0e7ee" stroke-width="1"/>
+<text x="90" y="907" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#667589">A1/A5/A12、B1/B5/B12 · GND</text>
+<text x="640" y="907" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">电源负极 / USB GND / CAN GND</text>
+<text x="1130" y="907" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#52667a">核对实际转接板共地</text>
+<line x1="84" y1="924" x2="1515" y2="924" stroke="#e0e7ee" stroke-width="1"/>
+<text x="90" y="955" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#087d6d">B2 · CAN H</text>
+<text x="640" y="955" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">USB-CAN 的 CAN H</text>
+<text x="1130" y="955" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#52667a">PCAN DB9：7 脚</text>
+<line x1="84" y1="972" x2="1515" y2="972" stroke="#e0e7ee" stroke-width="1"/>
+<text x="90" y="1003" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#087d6d">B3 · CAN L</text>
+<text x="640" y="1003" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">USB-CAN 的 CAN L</text>
+<text x="1130" y="1003" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#52667a">PCAN DB9：2 脚</text>
+<line x1="84" y1="1020" x2="1515" y2="1020" stroke="#e0e7ee" stroke-width="1"/>
+<text x="90" y="1051" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#2567bc">B6 · USB D+</text>
+<text x="640" y="1051" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">电脑 USB D+（经专用转接线）</text>
+<text x="1130" y="1051" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#52667a">USB-A：3 脚</text>
+<line x1="84" y1="1068" x2="1515" y2="1068" stroke="#e0e7ee" stroke-width="1"/>
+<text x="90" y="1099" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#2567bc">B7 · USB D−</text>
+<text x="640" y="1099" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#152c44">电脑 USB D−（经专用转接线）</text>
+<text x="1130" y="1099" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" fill="#52667a">USB-A：2 脚</text>
+<rect x="60" y="1175" width="1480" height="265" rx="14" fill="#ffffff" stroke="#d6dfe9" stroke-width="2"/>
+<text x="84" y="1222" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="30" fill="#152c44">03  电脑端与供电要点</text>
+<text x="85" y="1269" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="25" fill="#152c44">USB-A：2 = D−，3 = D+，4 = GND；1 = +5V，本参考接线中不连接。</text>
+<text x="85" y="1312" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="25" fill="#bb382c">不要把电脑 USB +5V 与雷达 VCC 相连；不要按标准 USB-C VBUS 位置并脚。</text>
+<text x="85" y="1354" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="24" fill="#152c44">PCAN-USB：DB9 7 = CAN H，2 = CAN L，3/6 = CAN GND；1/9 不给雷达供电。</text>
+<text x="85" y="1397" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="24" fill="#52667a">CAN 设置 1 Mbps。核对两端终端电阻；已有终端时不要重复并接。</text>
+<rect x="60" y="1464" width="1480" height="164" rx="14" fill="#eef4fc" stroke="#bdd0e6" stroke-width="2"/>
+<text x="84" y="1508" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="28" fill="#152c44">电源与实物核对</text>
+<text x="84" y="1549" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="24" fill="#152c44">原作者资料提到 15V；本项目此前使用 12V / 3A。两者不能互相作为额定规格证明。</text>
+<text x="84" y="1591" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="24" fill="#152c44">以设备铭牌、原厂资料与转接板标识为准；本图未对你的实际插头方向逐针实测。</text>
+<text x="65" y="1675" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="22" fill="#52667a">来源：leommxj · DJI T40 RD2484R 雷达逆向分析；PEAK · PCAN-USB User Manual §4.1。</text>
+<text x="65" y="1712" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="22" fill="#52667a">针脚资料重绘 · 原图与参考链接见 docs/WIRING.md · 2026-11-15</text>
+</svg>
